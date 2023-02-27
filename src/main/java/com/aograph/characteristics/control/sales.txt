@@ -1,0 +1,7 @@
+WITH
+t10 as (select *
+   from ANALY_AIRLINE_MODEL
+   where FLTNO='${flight_no}' and DEP='${dep}' and ARR='${arr}' and FLIGHT_DATE=DATE '${flight_date}' and EX_DIF between 0 and 21)
+
+SELECT * FROM (SELECT t10.*, row_number() OVER (PARTITION BY FLIGHT_DATE, EX_DIF ORDER BY create_time DESC) limit_order FROM t10)
+    WHERE limit_order <= 1 order by EX_DIF

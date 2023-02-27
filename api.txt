@@ -1,0 +1,510 @@
+http://localhost:8089/api/ro?flight_no=MU6408&flight_date=2022-10-25&dep=CSX&arr=TAO&ex_date=2022-10-24
+{
+  "code": 0,
+  "message": "成功",
+  "data": {
+    "header": "MU6408 25OCT D CSXTAO 1 320^JJCDQIO/YYBMEHKLNRSVTGZX",
+    "insert_time": "2022-10-24 14:55:02",
+    "legs": [
+      {
+        "arr": "TAO",
+        "BLK": "0",
+        "arr_city": "青岛",
+        "MAX": "8",
+        "GRO": "0",
+        "T/B": "5",
+        "dep_city": "长沙",
+        "GRS": "0",
+        "CLASS": "J/JCDQIO",
+        "GT": null,
+        "dep": "CSX",
+        "OPEN": "3",
+        "CAP": "8",
+        "AVAIL": 3,
+        "SMT": "105",
+        "IND": null
+      },
+      ...
+    ],
+    "segs": [
+      {
+        "arr": "TAO",
+        "BLK": "0",
+        "arr_city": null,
+        "IND(rcmd)": "EK",
+        "LSV(curr)": "-",
+        "LT": null,
+        "dep_city": null,
+        "GRS": "0",
+        "LSV(rcmd)": "-",
+        "ADVISE_CLS": "",
+        "CLS": "J",
+        "LSS(rcmd)": "-",
+        "LSS": "-",
+        "dep": "CSX",
+        "FARE": 0,
+        "WL": "0",
+        "BKD": "0",
+        "SMT": null,
+        "FARE(rcmd)": 0,
+        "IND": "EK"
+      },
+      ...
+    ]
+  }
+}
+
+http://localhost:8089/api/priceHistory?flight_no=3U3057&flight_date=2022-09-29&dep=CAN&arr=XIC&startDate=2022-09-15&endDate=2022-09-29
+{
+  "code": 0,
+  "message": "成功",
+  "data": {
+    "xtime": [
+      "2022-09-24 16:32:57",
+      "2022-09-24 17:27:09",
+      ...
+    ],
+    "3U3057": [
+      {
+        "create_time": "2022-09-24 16:32:57",
+        "seatRatio": 0.38650307,
+        "price": 530,
+        "price_diff": 0
+      },
+      ...
+    ]
+  }
+}
+
+http://localhost:8089/api/salesData?flight_no=3U8963&flight_date=2022-09-30&dep=CTU&arr=PVG
+{
+  "code": 0,
+  "message": "成功",
+  "data": [
+    {
+      "seat_ratio": 0.584,
+      "cap": 197,
+      "ex_dif": 1,
+      "seat_ratio_wow": 0.584,
+      "dbkd": 0,
+      "seat_ratio_predict": 0.27918781725888325,
+      "bkd": 115,
+      "dbkd_wow": 0,
+      "seat_ratio_yoy": 0.533,
+      "bkd_wow": 115
+    },
+    ...
+  ]
+}
+
+http://localhost:8089/api/whitelist/list?flightNo=MU3102&dep=&arr=&fromDate=2022-11-18&toDate=2022-11-20&pageNo=1&pageSize=20
+pageNo从1开始，pageSize缺省值为20
+GET
+response:
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "total": 16,
+    "list":[
+        {
+          "ID": 1,
+          "FLIGHT_NO": "MU3102",
+          "DEP": "CTU",
+          "ARR": "PEK",
+          "FLIGHT_DATE_FROM": "2022-11-17",
+          "FLIGHT_DATE_TO": "2022-11-20",
+          "EX_DIF_FROM": 1,
+          "EX_DIF_TO": 10,
+          "MEMO": "test",
+          "CREATE_TIME": "2023-01-04 10:38:39",
+          "UPDATE_TIME": "2023-01-04 10:38:39"
+        },
+        ...
+      ]
+  }
+}
+
+http://localhost:8089/api/whitelist/create
+POST
+content：
+  {"flightNo":"MU3102", "dep": "CTU", "arr":"PEK", "fromDate":"2022-11-17", "toDate":"2022-11-20", "exDifFrom":1, "exDifTo":10, "memo":"test"}
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/whitelist/update
+POST
+content：
+  {"id":1, "fromDate":"2022-11-14", "toDate":"2022-11-18", "exDifFrom":1, "exDifTo":10, "memo":"test1"}
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/whitelist/delete?id=1
+POST
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/whitelist/detail/list?carrier=MU&flightNo=3102&dep=&arr=&fromDate=2022-11-10&toDate=2022-11-20&pageNo=1&pageSize=20
+pageNo从1开始，pageSize缺省值为20
+GET
+response:
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "total": 16,
+    "list":[
+      {
+        "FLIGHT_NO": "3102",
+        "DEP": "CTU",
+        "ARR": "PEK",
+        "FLIGHT_DATE": "2022-11-10",
+        "DOW": 5,
+        "Y_RATIO": 1,
+        "C_RATIO": 1,
+        "MIN_EX_DIF": -1,
+        "ENABLED": 1,
+        "ID": 3,
+        "CARRIER": "MU",
+        "ELINE": "CTU-PEK"
+      },
+      ...
+    ]
+  }
+}
+
+http://localhost:8089/api/whitelist/detail/update
+POST
+content：
+  {"whitelistId":1, "enabled":0, "y_ratio":0.8, "c_ratio":0.8, "fromDate":"2022-11-14", "toDate":"2022-11-16", "minExDif":2}
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/whitelist/detail/set
+POST
+content：
+  {"whitelistId":1, "enabled":0}
+  {"whitelistId":1, "enabled":1, "y_ratio":0.81, "c_ratio":0.82, "forecastTime":"2022-11-14 10:21:00"}
+  {"flightNo":"MU3102", "dep":"XIY", "arr":"CSX", "flightDate":"2022-11-20", "enabled":0}
+  {"flightNo":"MU3102", "dep":"XIY", "arr":"CSX", "flightDate":"2022-11-20", "enabled":1, "y_ratio":0.8, "c_ratio":0.8, "forecastTime":"2022-11-14 10:21:00"}
+
+这里参数forecastTime是可选的
+
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/whitelist/detail/batch_set
+POST
+content：
+  [{"id":1, "enabled":0},{"id":2, "enabled":1, "y_ratio":0.81, "c_ratio":0.82, "forecastTime":"2022-11-14 10:21:00"}]
+
+这里参数forecastTime是可选的
+
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/wyratio/create
+POST
+content：
+  {"flightNo":"MU3102", "eline": "CTUPEK", "fromDate":"2022-11-17", "toDate":"2022-11-20", 
+  "peerFlightNo":"3U6608", "peerEline": "CTUPEK", "peerFromDate":"2022-11-17", "peerToDate":"2022-11-20", "matchMethod":"DOW", "memo":"test"}
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/wyratio/update
+POST
+content：
+  {"id":1, "fromDate":"2022-11-14", "toDate":"2022-11-18", 
+  "peerFlightNo":"3U6308", "peerEline": "CTUPEK", "peerFromDate":"2022-11-14", "peerToDate":"2022-11-18", "matchMethod":"DOW", "memo":"test"}
+
+matchMethod的可选值为DOW, SEQ
+
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/wyratio/delete?id=1
+POST
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/wyratio/list?flightNo=&matchMethod=DOW&pageNo=1&pageSize=20
+pageNo从1开始，pageSize缺省值为20
+GET
+response:
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "total": 16,
+    "list": [
+      {
+        "ID": 1,
+        "FLIGHT_NO": "MU3102",
+        "ELINE": "CTUPEK",
+        "FLIGHT_DATE_FROM": "2022-11-14",
+        "FLIGHT_DATE_TO": "2022-11-18",
+        "PEER_FLIGHT_NO": "3U6308",
+        "PEER_ELINE": "CTUPEK",
+        "PEER_FLIGHT_DATE_FROM": "2022-11-14",
+        "PEER_FLIGHT_DATE_TO": "2022-11-18",
+        "MATCH_METHOD": "DOW",
+        "MEMO": "test",
+        "CREATE_TIME": "2023-01-04 17:05:39",
+        "UPDATE_TIME": "2023-01-04 17:08:27"
+      }
+    ],
+    ...
+  }
+}
+
+
+http://localhost:8089/api/holiday/create
+POST
+content：
+  {"excludeEline":"CTUPEK,XIYCAN", "eline": "*", "fromDate":"2022-10-01", "toDate":"2022-10-07", "overflowHead":1, "overflowTail": 1, "memo":"2022年国庆节"}
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/holiday/info?id=1
+GET
+response:
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "memo": "国庆节",
+    "fromDate": "2022-10-01",
+    "toDate": "2022-10-07",
+    "eline": "*",
+    "excludeEline": "CTUPEK,XIYCAN",
+    "overflowHead": 1,
+    "overflowTail": 1
+  }
+}
+
+http://localhost:8089/api/holiday/update
+POST
+content：
+  {"id":1, "excludeEline":"CTUPEK,XIYCAN", "eline": "*", "fromDate":"2022-10-01", "toDate":"2022-10-07", "overflowHead":1, "overflowTail": 1, "memo":"2022年国庆节"}
+
+matchMethod的可选值为DOW, SEQ
+
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/holiday/delete?id=1
+POST
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/holiday/list?memo=&pageNo=1&pageSize=20
+pageNo从1开始，pageSize缺省值为20
+GET
+response:
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "total": 8,
+    "list": [
+      {
+        "ID": 1,
+        "HOLIDAY": "2022-09-30",
+        "MEMO": "国庆节",
+        "ELINE": "*",
+        "EXCLUDE_ELINE": "CTUPEK,XIYCAN",
+        "DAYS": 6,
+        "OVERFLOW": 1,
+        "SEQ": -1,
+        "HOLIDAY_SEQ": 1
+      },
+      ...
+   ]
+  }
+}
+
+http://localhost:8089/api/flightSeason/create
+POST
+content：
+  {"name":"2022冬春航季", "startDate":"2022-10-30", "endDate":"2023-03-25"}
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/flightSeason/update
+POST
+content：
+  {"id":1, "name":"2022冬春季", "startDate":"2022-10-30", "endDate":"2023-03-25"}
+
+matchMethod的可选值为DOW, SEQ
+
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/flightSeason/delete?id=1
+POST
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/flightSeason/list?name=&pageNo=1&pageSize=20
+pageNo从1开始，pageSize缺省值为20
+GET
+response:
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "total": 10,
+    "list": [
+      {
+        "ID": 1,
+        "START_DATE": "2022-10-30",
+        "END_DATE": "2023-03-25",
+        "NAME": "2022冬春航季"
+      },
+      ...
+    ]
+  }
+}
+
+http://localhost:8089/api/springFestivalTransport/set?startDate=2023-01-13&endDate=2023-02-28
+POST
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/springFestivalTransport/get
+GET
+response:
+{"code":200,"message":"成功","data":"2023-01-13,2023-02-28"}
+
+http://localhost:8089/api/challenge/set?enable=true
+POST
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/challenge/get
+GET
+response:
+{"code":200,"message":"成功","data":"true"}
+
+http://localhost:8089/api/flightLine/create
+POST
+content：
+  {"eline":"CSXTAO", "flightNo":"MU6408", "startDate":"2022-10-10", "endDate":"2022-10-20", 
+   "challenge":1, "redPrice":450, "locked":1, "priceStep":10, "flyType":"ALONE"}
+
+flyType可选值为ALONE, COMPETE, 表示独飞，竞飞。challenge，locked值可为0,1, 表示假和真
+
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/flightLine/peer/list?id=2
+GET
+response:
+{
+  "code": 200,
+  "message": "成功",
+  "data": [
+    {
+      "FLIGHT_NO": "MU9961",
+      "DEP": "XIY",
+      "ARR": "HYN",
+      "DEP_TIME": "18:35",
+      "ARR_TIME": "21:15"
+    },
+    ...
+  ]
+}
+
+http://localhost:8089/api/flightLine/challenge/update
+POST
+content：
+  {"eline":"XIYHYN", "flightNo":"MU9961", "startDate":"2022-09-28", "endDate":"2022-09-29", "challenge":0}
+
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+
+http://localhost:8089/api/flightLine/redPrice/update
+POST
+content：
+  {"eline":"XIYHYN", "flightNo":"MU9961", "startDate":"2022-09-28", "endDate":"2022-09-29", "redPrice":400}
+
+matchMethod的可选值为DOW, SEQ
+
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/flightLine/update
+POST
+content：
+  {"id":1, "challenge":1, "redPrice":350, "locked":1, "flyType":"ALONE"}
+  {"id":1, "challenge":1, "redPrice":350, "locked":1, "priceStep":10, "flyType":"COMPETE", 
+  "peers":[{"flightNo":"3U8830", "dep":"XIY", "arr":"HYN", "dep_time":"12:00", "arr_time":"13:50"}]}
+
+flyType可选值为ALONE, COMPETE, 表示独飞，竞飞。challenge，locked值可为0,1, 表示假和真
+
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/flightLine/delete?id=1
+POST
+response:
+  {"code":0,"message":"成功","data":"OK"}
+
+http://localhost:8089/api/flightLine/list?eline=&flightNo=&flyType=&challenge=2&pageNo=1&pageSize=20
+pageNo从1开始，pageSize缺省值为20. challenge值可为0,1,2, 表示假，真和所有
+GET
+response:
+{
+  "code": 200,
+  "message": "成功",
+  "data": {
+    "total": 2,
+    "list": [
+      {
+        "ID": 1,
+        "FLIGHT_NO": "MU9961",
+        "DEP": "XIY",
+        "ARR": "HYN",
+        "FLIGHT_DATE": "2022-09-28",
+        "DEP_TIME": "17:00",
+        "ARR_TIME": "18:45",
+        "CHALLENGE": 1,
+        "FLY_TYPE": "COMPETE",
+        "CREATE_TIME": "2023-01-05 10:55:41",
+        "UPDATE_TIME": "2023-01-05 14:58:42",
+        "RED_PRICE": 350,
+        "LOCKED": 1,
+        "PRICE_STEP": 10,
+        "peers": [
+          {
+            "ID": 1,
+            "LINE_CFG_ID": 1,
+            "FLIGHT_NO": "3U8830",
+            "DEP": "XIY",
+            "ARR": "HYN",
+            "DEP_TIME": "12:00",
+            "ARR_TIME": "13:50"
+          }
+        ]
+      },
+      {
+        "ID": 2,
+        "FLIGHT_NO": "MU9961",
+        "DEP": "XIY",
+        "ARR": "HYN",
+        "FLIGHT_DATE": "2022-09-29",
+        "DEP_TIME": "17:00",
+        "ARR_TIME": "18:45",
+        "CHALLENGE": 0,
+        "FLY_TYPE": "ALONE",
+        "CREATE_TIME": "2023-01-05 10:55:41",
+        "UPDATE_TIME": "2023-01-05 10:55:41",
+        "RED_PRICE": 400,
+        "LOCKED": 1,
+        "PRICE_STEP": 10,
+        "peers": []
+      }
+    ]
+  }
+}

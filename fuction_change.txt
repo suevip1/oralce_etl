@@ -1,0 +1,601 @@
+-- etl1.1 start
+CREATE OR REPLACE FUNCTION USER_ECS_REPORT.FIND_JF_FLIGHT_ELEVEN(v_table IN OTA_JF_FLIGHTS, comp IN VARCHAR2, my_dep IN VARCHAR2, my_arr IN VARCHAR2, my_dep_time IN DATE, my_air_class NUMBER, my_jf VARCHAR2) RETURN VARCHAR2
+    IS
+    v_out VARCHAR2(10);
+    otherJfs OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    otherJfs1 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    otherJfs2 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    diffTime1 NUMBER;
+    diffTime2 NUMBER;
+    temp OTA_JF_FLIGHT;
+    otherJfs3 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    otherJfs4 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    otherJfs5 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+BEGIN
+    if v_table is not null and v_table.count > 0 then
+        FOR i IN 1..v_table.count LOOP
+            IF v_table(i).AIR_CODE != comp and v_table(i).FLIGHT_NO != my_jf THEN
+                otherJfs.extend;
+                otherJfs(otherJfs.count):=v_table(i);
+            END IF;
+        END LOOP;
+
+        if otherJfs is not null and otherJfs.count > 1 then
+            FOR i IN 1..otherJfs.count LOOP
+                IF otherJfs(i).DEP = my_dep and otherJfs(i).ARR = my_arr THEN
+                    otherJfs1.extend;
+                    otherJfs1(otherJfs1.count):=otherJfs(i);
+                END IF;
+            END LOOP;
+
+            IF otherJfs1 IS NULL OR otherJfs1.count = 0 THEN
+                FOR i IN 1..otherJfs.count LOOP
+                    IF otherJfs(i).ARR = my_arr THEN
+                        otherJfs1.extend;
+                        otherJfs1(otherJfs1.count):=otherJfs(i);
+                    END IF;
+                END LOOP;
+            end if;
+
+            IF otherJfs1 IS NULL OR otherJfs1.count = 0 THEN
+                FOR i IN 1..otherJfs.count LOOP
+                    IF otherJfs(i).DEP = my_dep THEN
+                        otherJfs1.extend;
+                        otherJfs1(otherJfs1.count):=otherJfs(i);
+                    END IF;
+                END LOOP;
+            end if;
+
+            if otherJfs1 IS NOT NULL OR otherJfs1.count > 1 then
+                FOR i IN 1..otherJfs1.count LOOP
+                    diffTime1:=abs(otherJfs1(i).DEP_TIME - my_dep_time) * 24;
+                    IF otherJfs1(i).FLIGHT_TYPE_CODE = 1 AND diffTime1 <= 3 THEN
+                        otherJfs2.extend;
+                        otherJfs2(otherJfs2.count):=otherJfs1(i);
+                    END IF;
+                END LOOP;
+
+                IF otherJfs2 IS NULL OR otherJfs2.count = 0 then
+                    FOR i IN 1..otherJfs1.count LOOP
+                        diffTime1:=abs(otherJfs1(i).DEP_TIME - my_dep_time) * 24;
+                        IF otherJfs1(i).FLIGHT_TYPE_CODE != 1 AND diffTime1 <= 3 THEN
+                            otherJfs2.extend;
+                            otherJfs2(otherJfs2.count):=otherJfs1(i);
+                        END IF;
+                    END LOOP;
+                end IF;
+
+                IF otherJfs2 IS NULL OR otherJfs2.count = 0 then
+                    FOR i IN 1..otherJfs1.count LOOP
+                        diffTime1:=abs(otherJfs1(i).DEP_TIME - my_dep_time) * 24;
+                        IF otherJfs1(i).FLIGHT_TYPE_CODE = 1 AND diffTime1 <= 24 THEN
+                            otherJfs2.extend;
+                            otherJfs2(otherJfs2.count):=otherJfs1(i);
+                        END IF;
+                    END LOOP;
+                end IF;
+
+                IF otherJfs2 IS NULL OR otherJfs2.count = 0 then
+                    FOR i IN 1..otherJfs1.count LOOP
+                        diffTime1:=abs(otherJfs1(i).DEP_TIME - my_dep_time) * 24;
+                        IF otherJfs1(i).FLIGHT_TYPE_CODE != 1 AND diffTime1 <= 24 THEN
+                            otherJfs2.extend;
+                            otherJfs2(otherJfs2.count):=otherJfs1(i);
+                        END IF;
+                    END LOOP;
+                end IF;
+
+                IF otherJfs2 IS NULL OR otherJfs2.count = 0 then
+                    otherJfs2:=otherJfs1;
+                end IF;
+
+                FOR i IN 1 .. otherJfs2.count LOOP
+                    FOR j IN 1 .. (otherJfs2.count-i) LOOP
+                        diffTime1:=abs(otherJfs2(j).DEP_TIME - my_dep_time) * 24 * 60 * 60;
+                        diffTime2:=abs(otherJfs2(j + 1).DEP_TIME - my_dep_time) * 24 * 60 * 60;
+                        if diffTime1 > diffTime2 then
+                            temp:= otherJfs2(j);
+                            otherJfs2(j):=otherJfs2(j+1);
+                            otherJfs2(j + 1):= temp;
+                        end if;
+                    END LOOP;
+                END LOOP;
+
+
+                FOR i IN 1..otherJfs2.count LOOP
+                    diffTime1:=abs(otherJfs2(1).DEP_TIME - my_dep_time) * 24 * 60 * 60;
+                    diffTime2:=abs(otherJfs2(i).DEP_TIME - my_dep_time) * 24 * 60 * 60;
+                    IF diffTime2 = diffTime1 THEN
+                        otherJfs3.extend;
+                        otherJfs3(otherJfs3.count):=otherJfs2(i);
+                    END IF;
+                END LOOP;
+
+                IF otherJfs3.count > 1 THEN
+                    FOR i IN 1 .. otherJfs3.count LOOP
+                        FOR j IN 1 .. (otherJfs3.count-i) LOOP
+                            if otherJfs3(j).LABEL > otherJfs3(j+1).LABEL then
+                                temp:= otherJfs3(j);
+                                otherJfs3(j):=otherJfs3(j+1);
+                                otherJfs3(j + 1):= temp;
+                            end if;
+                        END LOOP;
+                    END LOOP;
+
+                    FOR i IN 1..otherJfs3.count LOOP
+                        IF otherJfs3(i).LABEL = otherJfs3(1).LABEL THEN
+                            otherJfs4.extend;
+                            otherJfs4(otherJfs4.count):=otherJfs3(i);
+                        END IF;
+                    END LOOP;
+
+                    IF otherJfs4.count > 1 THEN
+                        FOR i IN 1 .. otherJfs4.count LOOP
+                            FOR j IN 1 .. (otherJfs4.count-i) LOOP
+                                diffTime1:= abs(otherJfs4(j).AIRCODE_CLASS - my_air_class);
+                                diffTime2:= abs(otherJfs4(j + 1).AIRCODE_CLASS - my_air_class);
+                                if diffTime1 > diffTime2 then
+                                    temp:= otherJfs4(j);
+                                    otherJfs4(j):=otherJfs4(j+1);
+                                    otherJfs4(j + 1):= temp;
+                                end if;
+                            END LOOP;
+                        END LOOP;
+
+                        FOR i IN 1..otherJfs4.count LOOP
+                            IF abs(otherJfs4(i).AIRCODE_CLASS - my_air_class) = abs(otherJfs4(1).AIRCODE_CLASS - my_air_class) THEN
+                                otherJfs5.extend;
+                                otherJfs5(otherJfs5.count):=otherJfs4(i);
+                            END IF;
+                        END LOOP;
+
+                        if otherJfs5 IS NOT NULL OR otherJfs5.count > 1 then
+                            SELECT FLIGHT_NO INTO v_out
+                            FROM (
+                                SELECT t.FLIGHT_NO, AIR_CODE, row_number() OVER(PARTITION BY tag ORDER BY AIR_CODE) rn
+                                FROM (
+                                    SELECT t2.*, 1 AS tag
+                                    FROM table(otherJfs5) t2
+                                ) t
+                            ) t1
+                            WHERE t1.rn = 1;
+                        ELSE
+                            v_out:=otherJfs5(1).FLIGHT_NO;
+                        end if;
+
+                    ELSIF otherJfs4.count = 1 THEN
+                        v_out:=otherJfs4(1).FLIGHT_NO;
+                    END IF;
+
+                ELSIF otherJfs3.count = 1 THEN
+                    v_out:=otherJfs3(1).FLIGHT_NO;
+                END IF;
+            elsif otherJfs1 is not null and otherJfs1.count = 1 then
+                v_out:=otherJfs1(1).FLIGHT_NO;
+            end if;
+        elsif otherJfs is not null and otherJfs.count = 1 then
+            v_out:=otherJfs(1).FLIGHT_NO;
+        end if;
+    end if;
+    RETURN v_out;
+END FIND_JF_FLIGHT_ELEVEN;
+
+CREATE OR REPLACE FUNCTION USER_ECS_REPORT.DIFF_BKG_PRICE_FILTER(v_table IN DIFF_BKG_PRICE_TABLE) RETURN DETAIL_BKGS_PRICES_TUPLE
+    IS
+    v_out DETAIL_BKG_PRICE_TABLE:=DETAIL_BKG_PRICE_TABLE();
+    v_data DIFF_BKG_PRICE_TABLE:=DIFF_BKG_PRICE_TABLE();
+    v_diff DIFF_BKG_PRICE_TABLE:=DIFF_BKG_PRICE_TABLE();
+    diffBkgC VARCHAR2(1000):='[';
+    priceC VARCHAR2(1000):='[';
+    detailBkgC VARCHAR2(1000):='[';
+    bpstuple DETAIL_BKGS_PRICES_TUPLE;
+    lvls COMMON_NUMBER_ARR;
+    bkdSum NUMBER:=0;
+BEGIN
+    IF v_table IS NOT NULL and v_table.count > 0 THEN
+        DECLARE
+            no_result EXCEPTION;
+        BEGIN
+            SELECT CAST(COLLECT(DIFF_BKG_PRICE_TUPLE(tt.diffbkg,tt.PRICE)) AS  DIFF_BKG_PRICE_TABLE),CAST(COLLECT(rn) AS  COMMON_NUMBER_ARR), sum(tt.diffbkg) INTO v_data,lvls,bkdSum
+            FROM (
+                SELECT tb.*, rownum AS rn
+                FROM (
+                    SELECT ta.DIFFBKG, ta.PRICE, 1 AS lmt
+                    FROM table(v_table) ta
+                    WHERE ta.DIFFBKG > 0
+                    ORDER BY ta.PRICE
+                ) tb
+            ) tt
+            GROUP BY tt.lmt;
+
+            v_diff.extend(lvls.count);
+            FOR i IN 1 .. lvls.count LOOP
+                v_diff(lvls(i)) :=v_data(i);
+            END LOOP;
+            v_out.extend(v_diff.count);
+            FOR i IN 1 .. v_diff.count LOOP
+                IF i>1 THEN
+                    v_out(i) :=DETAIL_BKG_PRICE_TUPLE(v_diff(i).diffbkg, v_diff(i).PRICE, (v_out(i-1).DIFFBKGS - v_diff(i-1).diffbkg));
+                ELSE
+                    v_out(i) :=DETAIL_BKG_PRICE_TUPLE(v_diff(i).diffbkg, v_diff(i).PRICE, bkdSum);
+                END IF;
+            END LOOP;
+
+            if v_out.count > 0 then
+                FOR i IN 1 .. v_out.count LOOP
+                    diffBkgC := diffBkgC || v_out(i).diffbkg || ',';
+                    priceC := priceC || v_out(i).PRICE || ',';
+                    detailBkgC := detailBkgC || v_out(i).DIFFBKGS || ',';
+                END LOOP;
+                diffBkgC:=subStr(diffBkgC, 1, LENGTH(diffBkgC)-1);
+                priceC:=subStr(priceC, 1, LENGTH(priceC)-1);
+                detailBkgC := subStr(detailBkgC, 1, LENGTH(detailBkgC)-1);
+            end if;
+
+        EXCEPTION
+            WHEN no_result THEN
+                v_data:=DIFF_BKG_PRICE_TABLE();
+                lvls:= NULL;
+                bkdSum:=0;
+            WHEN OTHERS THEN
+                v_data:=DIFF_BKG_PRICE_TABLE();
+                lvls:= NULL;
+                bkdSum:=0;
+        END;
+
+    END IF;
+    diffBkgC:=diffBkgC || ']';
+    priceC:=priceC || ']';
+    detailBkgC := detailBkgC || ']';
+    bpstuple:=DETAIL_BKGS_PRICES_TUPLE(diffBkgC,priceC,detailBkgC);
+    RETURN bpstuple;
+END DIFF_BKG_PRICE_FILTER;
+
+CREATE OR REPLACE FUNCTION USER_ECS_REPORT.DIFF_BKG_PRICE_FILTER_ELEVEN(v_table IN DIFF_BKG_PRICE_TABLE) RETURN DETAIL_BKGS_PRICES_TUPLE
+    IS
+    v_out DETAIL_BKG_PRICE_TABLE:=DETAIL_BKG_PRICE_TABLE();
+    temp DIFF_BKG_PRICE_TUPLE;
+    v_diff DIFF_BKG_PRICE_TABLE:=DIFF_BKG_PRICE_TABLE();
+    diffBkgC VARCHAR2(1000):='[';
+    priceC VARCHAR2(1000):='[';
+    detailBkgC VARCHAR2(1000):='[';
+    bpstuple DETAIL_BKGS_PRICES_TUPLE;
+    bkdSum NUMBER:=0;
+BEGIN
+    IF v_table IS NOT NULL and v_table.count > 0 THEN
+        FOR i IN 1 .. v_table.count LOOP
+            IF v_table(i).DIFFBKG > 0 THEN
+                v_diff.extend;
+                v_diff(v_diff.count):=v_table(i);
+            END IF;
+        END LOOP;
+
+        FOR i IN 1 .. (v_diff.count-1) LOOP
+            FOR j IN 1 .. (v_diff.count - i - 1) LOOP
+                if v_diff(j).PRICE > v_diff(j+1).PRICE then
+                    temp:= v_diff(j);
+                    v_diff(j):=v_diff(j+1);
+                    v_diff(j + 1):= temp;
+                end if;
+            END LOOP;
+        END LOOP;
+
+        FOR i IN 1 .. v_diff.count LOOP
+            bkdSum:=bkdSum + v_diff(i).diffbkg;
+        END LOOP;
+
+        v_out.extend(v_diff.count);
+        FOR i IN 1 .. v_diff.count LOOP
+            IF i>1 THEN
+                v_out(i) :=DETAIL_BKG_PRICE_TUPLE(v_diff(i).diffbkg, v_diff(i).PRICE, (v_out(i-1).DIFFBKGS - v_diff(i-1).diffbkg));
+            ELSE
+                v_out(i) :=DETAIL_BKG_PRICE_TUPLE(v_diff(i).diffbkg, v_diff(i).PRICE, bkdSum);
+            END IF;
+        END LOOP;
+
+        if v_out is not null and v_out.count > 0 then
+            FOR i IN 1 .. v_out.count LOOP
+                diffBkgC := diffBkgC || v_out(i).diffbkg || ',';
+                priceC := priceC || v_out(i).PRICE || ',';
+                detailBkgC := detailBkgC || v_out(i).DIFFBKGS || ',';
+            END LOOP;
+            diffBkgC:=subStr(diffBkgC, 1, LENGTH(diffBkgC)-1);
+            priceC:=subStr(priceC, 1, LENGTH(priceC)-1);
+            detailBkgC := subStr(detailBkgC, 1, LENGTH(detailBkgC)-1);
+        end if;
+
+        diffBkgC:=diffBkgC || ']';
+        priceC:=priceC || ']';
+        detailBkgC := detailBkgC || ']';
+        bpstuple:=DETAIL_BKGS_PRICES_TUPLE(diffBkgC,priceC,detailBkgC);
+    END IF;
+    RETURN bpstuple;
+END DIFF_BKG_PRICE_FILTER_ELEVEN;
+
+CREATE OR REPLACE FUNCTION USER_ECS_REPORT.FIND_FLY_TIME(v_table IN COLLECT_DATES, cdate IN DATE, ex_dif IN NUMBER, days IN NUMBER, tp IN NUMBER) RETURN DATE
+    IS
+    v_out DATE;
+    diffTime NUMBER;
+    timeCha NUMBER;
+    resu NUMBER:=-1;
+BEGIN
+    IF v_table IS NOT NULL THEN
+        DECLARE
+            no_result EXCEPTION;
+        BEGIN
+            IF tp = 0 THEN
+                SELECT cDate INTO v_out
+                FROM (
+                    SELECT dt1.*, row_number() OVER(PARTITION BY tag ORDER BY diffTime) rn
+                    FROM (
+                        SELECT abs(cdate - ct.D) as diffTime, ct.D as cDate, 1 AS tag
+                        FROM table(v_table) ct
+                        WHERE (ex_dif <= days AND TO_DATE(cdate) = (TO_DATE(ct.D) + days)) OR (ex_dif > days AND TO_DATE(cdate) = TO_DATE(ct.D))
+                    ) dt1
+                )
+                WHERE rn = 1;
+            ELSE
+                SELECT cDate INTO v_out
+                FROM (
+                    SELECT dt1.*, row_number() OVER(PARTITION BY tag ORDER BY diffTime) rn
+                    FROM (
+                        SELECT abs(cdate - ct.D) as diffTime, ct.D as cDate, 1 AS tag
+                        FROM table(v_table) ct
+                        WHERE TO_DATE(cdate) = TO_DATE(ct.D)
+                    ) dt1
+                )
+                WHERE rn = 1;
+            END IF;
+        EXCEPTION
+            WHEN no_result THEN
+                v_out:=NULL;
+            WHEN OTHERS THEN
+                v_out:=NULL;
+        END;
+    END IF;
+    RETURN v_out;
+END FIND_FLY_TIME;
+
+
+CREATE OR REPLACE FUNCTION USER_ECS_REPORT.FIND_JF_FLIGHT(v_table IN OTA_JF_FLIGHTS, comp IN VARCHAR2, my_dep IN VARCHAR2, my_arr IN VARCHAR2, my_dep_time IN DATE, my_air_class NUMBER, my_jf VARCHAR2) RETURN VARCHAR2
+    IS
+    v_out VARCHAR2(1000);
+    otherJfs OTA_JF_FLIGHTS;
+    otherJfs1 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    otherJfs2 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    otherJfs3 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    otherJfs4 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    otherJfs5 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    otherJfs6 OTA_JF_FLIGHTS:=OTA_JF_FLIGHTS();
+    num NUMBER;
+
+BEGIN
+    IF v_table IS NOT NULL and v_table.count > 0  THEN
+
+        IF my_jf IS NOT NULL THEN
+            SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs INTO otherJfs1
+            FROM (
+                SELECT t.AIR_CODE, t.FLIGHT_NO, t.DEP, t.ARR, t.DEP_TIME, t.AIRCODE_CLASS, t.FLIGHT_TYPE_CODE, t.LABEL, 1 AS fKey
+                FROM table(v_table) t
+                WHERE t.AIR_CODE != comp AND t.FLIGHT_NO != my_jf
+            )
+            GROUP BY fKey;
+        ELSE
+            SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs INTO otherJfs1
+            FROM (
+                SELECT t.AIR_CODE, t.FLIGHT_NO, t.DEP, t.ARR, t.DEP_TIME, t.AIRCODE_CLASS, t.FLIGHT_TYPE_CODE, t.LABEL, 1 AS fKey
+                FROM table(v_table) t
+                WHERE t.AIR_CODE != comp
+            )
+            GROUP BY fKey;
+        END IF;
+
+        IF otherJfs1 IS NOT NULL AND otherJfs1.count > 0 THEN
+            SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs2
+            FROM (
+                SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                FROM table(otherJfs1) t1
+                WHERE t1.DEP = my_dep AND t1.ARR = my_arr
+            )
+            GROUP BY oKey;
+
+            IF otherJfs2 IS NULL OR otherJfs2.count = 0 THEN
+                SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs2
+                FROM (
+                    SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                    FROM table(otherJfs1) t1
+                    WHERE t1.ARR = my_arr
+                )
+                GROUP BY oKey;
+            end IF;
+
+            IF otherJfs2 IS NULL OR otherJfs2.count = 0 THEN
+                SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs2
+                FROM (
+                    SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                    FROM table(otherJfs1) t1
+                    WHERE t1.DEP = my_dep
+                )
+                GROUP BY oKey;
+            end IF;
+
+            IF otherJfs2 IS NULL OR otherJfs2.count = 0 THEN
+                otherJfs2:=otherJfs1;
+            end IF;
+
+            DECLARE
+                no_result EXCEPTION;
+            BEGIN
+                SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs3
+                FROM (
+                    SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                    FROM table(otherJfs2) t1
+                    WHERE t1.FLIGHT_TYPE_CODE = 1 AND abs(t1.DEP_TIME - my_dep_time) * 24 <= 3
+                )
+                GROUP BY oKey;
+            EXCEPTION
+                WHEN no_result THEN
+                    otherJfs3:=OTA_JF_FLIGHTS();
+                WHEN OTHERS THEN
+                    otherJfs3:=OTA_JF_FLIGHTS();
+            END;
+
+            DECLARE
+                no_result EXCEPTION;
+            BEGIN
+                IF otherJfs3 IS NULL OR otherJfs3.count = 0 THEN
+                    SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs3
+                    FROM (
+                        SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                        FROM table(otherJfs2) t1
+                        WHERE t1.FLIGHT_TYPE_CODE != 1 AND abs(t1.DEP_TIME - my_dep_time) * 24 <= 3
+                    )
+                    GROUP BY oKey;
+                END IF;
+            EXCEPTION
+                WHEN no_result THEN
+                    otherJfs3:=OTA_JF_FLIGHTS();
+                WHEN OTHERS THEN
+                    otherJfs3:=OTA_JF_FLIGHTS();
+            END;
+
+            DECLARE
+                no_result EXCEPTION;
+            BEGIN
+                IF otherJfs3 IS NULL OR otherJfs3.count = 0 THEN
+                    SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs3
+                    FROM (
+                        SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                        FROM table(otherJfs2) t1
+                        WHERE t1.FLIGHT_TYPE_CODE = 1 AND abs(t1.DEP_TIME - my_dep_time) * 24 <= 24
+                    )
+                    GROUP BY oKey;
+                END IF;
+            EXCEPTION
+                WHEN no_result THEN
+                    otherJfs3:=OTA_JF_FLIGHTS();
+                WHEN OTHERS THEN
+                    otherJfs3:=OTA_JF_FLIGHTS();
+            END;
+
+            DECLARE
+                no_result EXCEPTION;
+            BEGIN
+                IF otherJfs3 IS NULL OR otherJfs3.count = 0 THEN
+                    SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs3
+                    FROM (
+                        SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                        FROM table(otherJfs2) t1
+                        WHERE t1.FLIGHT_TYPE_CODE != 1 AND abs(t1.DEP_TIME - my_dep_time) * 24 <= 24
+                    )
+                    GROUP BY oKey;
+                END IF;
+            EXCEPTION
+                WHEN no_result THEN
+                    otherJfs3:=OTA_JF_FLIGHTS();
+                WHEN OTHERS THEN
+                    otherJfs3:=OTA_JF_FLIGHTS();
+            END;
+
+            DECLARE
+                no_result EXCEPTION;
+            BEGIN
+                IF otherJfs3 IS NOT NULL and otherJfs3.count > 1 THEN
+                    SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs4
+                    FROM (
+                        SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                        FROM table(otherJfs3) t1
+                        WHERE abs(TO_NUMBER(t1.DEP_TIME - my_dep_time)) = (
+                            SELECT min(abs(TO_NUMBER(t1.DEP_TIME - my_dep_time))) diffTime
+                            FROM table(otherJfs3) t1
+                        )
+                    )
+                    GROUP BY oKey;
+                ELSE
+                    otherJfs4:=otherJfs3;
+                END IF;
+            EXCEPTION
+                WHEN no_result THEN
+                    otherJfs4:=OTA_JF_FLIGHTS();
+                WHEN OTHERS THEN
+                    otherJfs4:=OTA_JF_FLIGHTS();
+            END;
+
+
+            DECLARE
+                no_result EXCEPTION;
+            BEGIN
+                IF otherJfs4 IS NOT NULL and otherJfs4.count > 1 THEN
+                    SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs5
+                    FROM (
+                        SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                        FROM table(otherJfs4) t1
+                        WHERE t1.LABEL = (
+                            SELECT min(t.LABEL) diffTime
+                            FROM table(otherJfs4) t
+                        )
+                    )
+                    GROUP BY oKey;
+                ELSE
+                    otherJfs5:=otherJfs4;
+                END IF;
+            EXCEPTION
+                WHEN no_result THEN
+                    otherJfs5:=OTA_JF_FLIGHTS();
+                WHEN OTHERS THEN
+                    otherJfs5:=OTA_JF_FLIGHTS();
+            END;
+
+            DECLARE
+                no_result EXCEPTION;
+            BEGIN
+                IF otherJfs5 IS NOT NULL and otherJfs5.count > 1 THEN
+                    SELECT CAST(COLLECT(OTA_JF_FLIGHT(AIR_CODE, FLIGHT_NO, DEP, ARR, DEP_TIME, AIRCODE_CLASS, FLIGHT_TYPE_CODE, LABEL)) AS OTA_JF_FLIGHTS) ojfs1 INTO otherJfs6
+                    FROM (
+                        SELECT t1.AIR_CODE, t1.FLIGHT_NO, t1.DEP, t1.ARR, t1.DEP_TIME, t1.AIRCODE_CLASS, t1.FLIGHT_TYPE_CODE, t1.LABEL, 1 AS oKey
+                        FROM table(otherJfs5) t1
+                        WHERE abs(t1.AIRCODE_CLASS - my_air_class) = (
+                            SELECT min(abs(t.AIRCODE_CLASS - my_air_class)) diffTime
+                            FROM table(otherJfs5) t
+                        )
+                    )
+                    GROUP BY oKey;
+                ELSE
+                    otherJfs6:=otherJfs5;
+                END IF;
+            EXCEPTION
+                WHEN no_result THEN
+                    otherJfs6:=OTA_JF_FLIGHTS();
+                WHEN OTHERS THEN
+                    otherJfs6:=OTA_JF_FLIGHTS();
+            END;
+
+            DECLARE
+                no_result EXCEPTION;
+            BEGIN
+                IF otherJfs6 IS NOT NULL and otherJfs6.count > 1 THEN
+                    SELECT FLIGHT_NO INTO v_out
+                    FROM (
+                        SELECT t.FLIGHT_NO, AIR_CODE, row_number() OVER(PARTITION BY tag ORDER BY AIR_CODE) rn
+                        FROM (
+                            SELECT t2.*, 1 AS tag
+                            FROM table(otherJfs6) t2
+                        ) t
+                    ) t1
+                    WHERE t1.rn = 1;
+                ELSE
+                    v_out:=otherJfs6(1).FLIGHT_NO;
+                END IF;
+            EXCEPTION
+                WHEN no_result THEN
+                    v_out:=NULL;
+                WHEN OTHERS THEN
+                    v_out:=NULL;
+            END;
+
+        END IF;
+
+    END IF;
+    RETURN v_out;
+END FIND_JF_FLIGHT;
+-- etl1.1 end

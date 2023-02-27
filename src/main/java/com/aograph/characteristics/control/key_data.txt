@@ -1,0 +1,7 @@
+WITH
+t10 as (select FLIGHT_DATE, EX_DIF, STD_PRICE, KZL, YOY_KZL, BKD, CAP, HIS_1, HIS_2, HIS_3, HIS_4, HIS_5, HIS_6, HOLIDAY, create_time
+   from ANALY_AIRLINE_MODEL
+   where FLTNO='${flight_no}' and DEP='${dep}' and ARR='${arr}' and FLIGHT_DATE=DATE '${flight_date}')
+SELECT * FROM (SELECT t10.*, row_number() OVER (PARTITION BY FLIGHT_DATE ORDER BY EX_DIF DESC, create_time DESC) limit_order FROM t10)
+    WHERE limit_order <= 1
+

@@ -1,0 +1,47 @@
+@startuml
+'https://plantuml.com/use-case-diagram
+
+User --> (readDepArrPairJob)
+
+note bottom of (readDepArrPairJob) : This is performed each \ntime a new route is added.
+
+User --> (readAvJob)
+(readAvJob) ..> (readFlightScheduleJob)
+readFlightScheduleJob ..> (readFlightInfoJob)
+readFlightInfoJob ..> (readPnrTicketJob)
+readPnrTicketJob ..> (readFarePrivateJob)
+readFarePrivateJob ..> (readFareFdJob)
+readFareFdJob ..> (readCtripPriceJob)
+readCtripPriceJob ..> (readFlpJob)
+readFlpJob ..> (readInvJob)
+
+User --> (readHisInvJob)
+
+note bottom of (readHisInvJob) : After readCtripPriceJob.\nExecute only once.
+
+User --> (SupplementHisFareJob)
+
+note bottom of (SupplementHisFareJob) : after readFlpJob.\nExecute only once.
+
+User --> (readHolidayJob)
+(readHolidayJob)..>(addHolidayDate)
+
+User --> (checkAssist)
+
+note bottom of (checkAssist) : after readFlpJob.
+
+(Add forecast flight) as (Use1)
+
+User --> (Use1)
+
+note bottom of Use1 : Add the predicted flight \nto ASSIST_WHITELIST.
+
+User --> (featureEtlAllJob)
+
+note bottom of (featureEtlAllJob) : Generate model training data.\nafter Use1 and checkAssist.
+
+User --> (featureEtlJob)
+
+note bottom of (featureEtlJob) : Generate model prediction data.\nafter Use1 and checkAssist.
+
+@enduml

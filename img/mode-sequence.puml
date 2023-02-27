@@ -1,0 +1,14 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+数据源 -> 基础特征字段: 开启多线程同时生成价格模型\n和流量模型的部分特征字段
+
+基础特征字段 -> 初级模型特征: ota生成价格模型基础特征，\naograph_air_for_model生成流量模型。
+
+初级模型特征 -> 最终价格模型: ANALY_OTA_FEATURE合并\nANALY_AIRLINE_MODEL_HOUR部分特征，\n生成ANALY_OTA_MERGE_FEATURE。
+
+最终价格模型 -> 最终流量模型: ANALY_AIRLINE_MODEL_HOUR合并\nANALY_OTA_MERGE_FEATURE，\n生成ANALY_AIRLINE_MODEL
+
+@enduml

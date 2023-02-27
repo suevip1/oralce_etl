@@ -1,0 +1,29 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+abstract class AbstractFileJob {
+    processFile(File file)
+}
+interface Filter
+
+Filter <|-- ContainFilter
+AbstractFileJob <|-- ReadAvJob
+AbstractFileJob <|-- ReadCtripPriceJob
+AbstractFileJob <|-- ReadDepArrPairJob
+AbstractFileJob <|-- ReadFareFdJob
+AbstractFileJob <|-- ReadFarePrivateJob
+AbstractFileJob <|-- ReadFlightInfoJob
+AbstractFileJob <|-- ReadFlightScheduleJob
+AbstractFileJob <|-- ReadFlpJob
+AbstractFileJob <|-- ReadHisInvJob
+AbstractFileJob <|-- ReadInvJob
+AbstractFileJob <|-- ReadPnrTicketJob
+
+
+enum TimeUnit {
+DAYS
+HOURS
+MINUTES
+}
+
+@enduml

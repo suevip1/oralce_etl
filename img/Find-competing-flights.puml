@@ -1,0 +1,77 @@
+@startuml
+'https://plantuml.com/activity-diagram-beta
+
+start
+:从对标航班中查找;
+if (是否有对标航班?) then (是)
+  if (是否是选取第二对标航班?) then (是)
+    :去除第一对标航班;
+  else (否)
+  endif
+  if (是否有数据?) then (是)
+    if (是否有多个航班?) then (是)
+      :按优先级排序;
+    else (否)
+    endif
+    :选取第一个为竞飞航班;
+    stop
+  else (否)
+  endif
+else (否)
+endif
+:从ota数据中按create_time分批查找;
+:去除虚拟航班;
+:去掉本航司（或者同航系）的航班;
+if (是否是选取第二竞飞航班?) then (是)
+:去除第一竞飞航班;
+else (否)
+endif
+if (是否有同航段的航班?) then (否)
+if (是否有到达机场(arr)一样的航班?) then (否)
+  if (是否有起飞机场(dep)一样的航班?) then (否)
+    if (是否有城市到城市的航班?) then (否)
+      stop
+    else (是)
+    endif
+  else (是)
+  endif
+else (是)
+endif
+else (是)
+endif
+
+if (是否有3小时内的直飞航班?) then (否)
+if (是否有3小时内的经停航班?) then (否)
+  if (是否有24小时内的直飞航班?) then (否)
+    if (是否有24小时内的经停航班?) then (否)
+      stop
+    else (是)
+    endif
+  else (是)
+  endif
+else (是)
+endif
+else (是)
+endif
+
+if (是否有多个航班?) then (是)
+:选取时间最邻近的航班;
+if (是否有多个航班?) then (是)
+  :选取价格最低的航班;
+  if (是否有多个航班?) then (是)
+    :选取航司等级最接近的航班;
+    if (是否有多个航班?) then (是)
+      :按航司代码排序;
+    else (否)
+    endif
+  else (否)
+  endif
+else (否)
+endif
+else (否)
+endif
+
+:选取第一个为竞飞航班;
+stop
+
+@enduml
